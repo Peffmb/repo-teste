@@ -1,0 +1,118 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  clerkId        String    @unique
+  email          String    @unique
+  name           String?
+  imageUrl       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  exercises      Exercise[]
+  workouts       Workout[]
+  dietPlans      DietPlan[]
+  weightLogs     WeightLog[]
+  pushSubscribed Boolean   @default(false)
+  pushEndpoint   String?
+  pushP256dh     String?
+  pushAuth       String?
+}
+
+model Exercise {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  category    String   @default("strength")
+  muscleGroup String?
+  equipment   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workoutExercises WorkoutExercise[]
+}
+
+model Workout {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  status      String   @default("draft")
+  scheduledAt DateTime?
+  completedAt DateTime?
+  duration    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  exercises   WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id         String   @id @default(cuid())
+  workoutId  String
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  order      Int      @default(0)
+  sets       Int      @default(3)
+  reps       Int?
+  weight     Float?
+  restTime   Int      @default(60)
+  completed  Boolean  @default(false)
+  notes      String?
+  actualSets Int      @default(0)
+  actualReps Int?
+  actualWeight Float?
+}
+
+model DietPlan {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  targetCalories Int
+  protein     Int
+  carbs       Int
+  fats        Int
+  startDate   DateTime
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  meals       Meal[]
+}
+
+model Meal {
+  id         String   @id @default(cuid())
+  dietPlanId String
+  dietPlan   DietPlan @relation(fields: [dietPlanId], references: [id], onDelete: Cascade)
+  name       String
+  type       String
+  calories   Int
+  protein    Int
+  carbs      Int
+  fats       Int
+  time       DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+model WeightLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weight    Float
+  unit      String   @default("kg")
+  bodyFat   Float?
+  notes     String?
+  loggedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+}
